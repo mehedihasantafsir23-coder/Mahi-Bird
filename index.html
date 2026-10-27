@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mahi Bird</title>
+<style>
+:root{--pink:#ff9ecb;--cream:#fff0d7;--brown:#75452f;--wood:#b87543;--dark:#442719}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Trebuchet MS,Arial,sans-serif;background:#83d9f5;color:var(--dark)}
+button{font:700 16px inherit;cursor:pointer;border:3px solid #5b351f;border-radius:12px;background:linear-gradient(#ffe2a9,#c9894f);color:#492a1b;padding:10px 16px;box-shadow:0 4px 0 #5b351f}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #5b351f}
+#game{width:100%;height:100%;position:relative;overflow:hidden;background:linear-gradient(#77d6f4 0%,#d4f6ff 68%,#7fca54 68%,#3f9b3e 100%)}
+.cloud{position:absolute;background:#fff;border-radius:50px;opacity:.85;width:100px;height:28px}.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border-radius:50%;bottom:7px;width:42px;height:42px}.cloud:before{left:15px}.cloud:after{right:12px;width:32px;height:32px}
+#cloud1{top:12%;left:12%}#cloud2{top:20%;right:12%;transform:scale(.7)}
+#topbar{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5;gap:8px}
+.woodsign{background:linear-gradient(110deg,#d89a5c,#a65e32);border:4px solid #6d3e26;border-radius:7px;padding:9px 14px;color:#fff4d9;text-shadow:1px 2px #59321e;box-shadow:inset 0 0 0 2px #edbb7b,0 4px #704126;position:relative}
+.leopard{background-color:#e8b777;background-image:radial-gradient(ellipse at 30% 30%,#3c2418 0 3px,transparent 4px),radial-gradient(ellipse at 70% 65%,#4a2b1c 0 4px,transparent 5px),radial-gradient(ellipse at 45% 80%,#3b2418 0 2px,transparent 3px);background-size:28px 24px}
+#levelSign{font-size:14px;font-weight:bold;min-width:95px}#lives{display:flex;gap:4px;font-size:22px;color:#e72e6b;text-shadow:1px 2px white}
+#pause{padding:5px 11px;font-size:19px}
+#canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#board{position:absolute;left:50%;top:24%;transform:translateX(-50%);width:min(390px,68vw);min-height:100px;text-align:center;padding:17px 16px;background:#fff0cf;border:8px solid #9b5a30;outline:3px solid #f4c17c;border-radius:5px;box-shadow:0 5px 0 #5b351f;z-index:2}
+#board:before{content:"";position:absolute;inset:5px;border:2px dashed #c58a4b;pointer-events:none}
+#board h1{margin:0 0 7px;font-size:clamp(25px,5vw,42px);letter-spacing:1px;color:#b44f75}
+#board p{margin:0;font-size:clamp(12px,2.5vw,17px);line-height:1.35}
+#startScreen,#modal{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px;background:#3e271bbd;text-align:center}
+.panel{width:min(440px,94vw);background:#fff0d7;border:8px solid #9b5a30;outline:4px solid #f2bd7c;border-radius:18px;padding:25px 20px;box-shadow:0 10px 0 #482919;position:relative}
+.panel h1{font-size:clamp(38px,9vw,64px);margin:0;color:#c14e79;text-shadow:2px 3px #ffd4e5}
+.panel p{line-height:1.5}.catface{font-size:70px;display:block;filter:drop-shadow(2px 4px 0 #d7a36d);margin:3px}
+#startBtn{font-size:20px}.small{font-size:12px;opacity:.8}
+#launchHint{position:absolute;bottom:16px;right:16px;z-index:4;font-weight:bold}
+#ammo{position:absolute;bottom:17px;left:15px;z-index:4;font-size:19px;font-weight:bold;color:#56301b;text-shadow:1px 1px #fff}
+#mute{position:absolute;top:70px;right:12px;z-index:6;padding:6px 10px}
+#modal{display:none;background:#302019c9}
+#modal .panel{max-height:90vh;overflow:auto}
+#modal h2{color:#b44f75;margin:5px 0 12px}
+#modal p{white-space:pre-line}
+#modal .rewardcat{font-size:72px}
+#modal .letter{font-family:Georgia,serif;font-style:italic;font-size:18px;background:#fff9e9;border:2px dashed #ca9b65;padding:16px}
+#modal .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px}
+#toast{position:absolute;bottom:58px;left:50%;transform:translateX(-50%);z-index:6;background:#fff0d7;border:2px solid #7b4a2b;border-radius:12px;padding:8px 12px;font-weight:bold;display:none;max-width:90%;text-align:center}
+@media(max-width:600px){#board{top:18%;width:76vw;padding:13px 12px;border-width:6px}#topbar{top:8px;left:8px;right:8px}.woodsign{padding:7px 9px}#mute{top:60px;right:8px}#launchHint{font-size:12px;bottom:12px;right:10px}#ammo{font-size:16px;bottom:12px;left:10px}}
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="cloud" id="cloud1"></div><div class="cloud" id="cloud2"></div>
+  <canvas id="canvas"></canvas>
+  <div id="topbar">
+    <div id="levelSign" class="woodsign leopard">🐾 LEVEL 1</div>
+    <div style="display:flex;align-items:center;gap:8px"><div id="lives">♥ ♥ ♥</div><button id="pause" aria-label="Pause">Ⅱ</button></div>
+  </div>
+  <button id="mute" class="leopard" aria-label="Mute music">♫</button>
+  <div id="board"><h1>Mahi Bird</h1><p>Pull the cat back, aim, and launch!<br>Knock down the pig's tower.</p></div>
+  <div id="ammo">🐱 × 5</div>
+  <div id="launchHint" class="woodsign leopard">TAP & DRAG TO AIM</div>
+  <div id="toast"></div>
+  <div id="startScreen"><div class="panel leopard" style="background-color:#fff0d7;background-blend-mode:screen">
+    <span class="catface">😾</span><h1>Mahi Bird</h1>
+    <p>A tiny cat, a piggy target, and a whole lot of chaos. 🐆</p>
+    <button id="startBtn">START GAME ▶</button>
+    <p class="small">Soundtrack starts after you tap Start. Music volume: 30%.</p>
+  </div></div>
+  <div id="modal"><div class="panel"><h2 id="modalTitle">PAUSED</h2><div id="modalBody"></div><div class="actions" id="modalActions"></div></div></div>
+  <audio id="music" loop preload="auto"></audio>
+</div>
+<script>
+(() => {
+const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const music=$('music'); music.volume=.30;
+const AUDIO_FILE='background.mp3';
+music.src=AUDIO_FILE;
+let W=0,H=0,scale=1,started=false,paused=false,level=1,ammo=5,score=0,shots=0,cat=null,blocks=[],pig=null,particles=[],dragging=false,dragStart=null,dragPos=null,phase='menu',level2Attempts=0,endingTimer=null,gameOver=false;
+function resize(){const dpr=Math.min(window.devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;scale=dpr;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);draw();}
+addEventListener('resize',resize);
+const groundY=()=>H*.70;
+function setupLevel(n){level=n;ammo=n===1?5:18;shots=0;level2Attempts=0;blocks=[];particles=[];pig=null;cat={x:W*.17,y:groundY()-42,r:25,vx:0,vy:0,air:false,cry:false,active:true};if(n===1){blocks=[{x:W*.69,y:groundY()-58,w:20,h:58},{x:W*.80,y:groundY()-58,w:20,h:58},{x:W*.745,y:groundY()-82,w:95,h:15}];pig={x:W*.745,y:groundY()-110,r:18,alive:true};}else{blocks=[{x:W*.83,y:groundY()-25,w:10,h:25}];pig={x:W*.835,y:groundY()-43,r:9,alive:true};}
+$('levelSign').textContent='🐾 LEVEL '+n;$('ammo').textContent='🐱 × '+ammo;$('board').style.display='none';phase='playing';draw();}
+function drawCat(x,y,r,cry=false){ctx.save();ctx.translate(x,y);ctx.fillStyle='#fff2df';ctx.strokeStyle='#8d6b5a';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,2,r*1.02,r*.88,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-r*.7,-r*.4);ctx.lineTo(-r*.78,-r*1.15);ctx.lineTo(-r*.18,-r*.72);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(r*.7,-r*.4);ctx.lineTo(r*.78,-r*1.15);ctx.lineTo(r*.18,-r*.72);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#f4a2bc';ctx.beginPath();ctx.moveTo(-r*.62,-r*.68);ctx.lineTo(-r*.68,-r*.99);ctx.lineTo(-r*.37,-r*.76);ctx.fill();ctx.beginPath();ctx.moveTo(r*.62,-r*.68);ctx.lineTo(r*.68,-r*.99);ctx.lineTo(r*.37,-r*.76);ctx.fill();ctx.strokeStyle='#38251f';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-r*.58,-r*.26);ctx.lineTo(-r*.12,-r*.36);ctx.moveTo(r*.12,-r*.36);ctx.lineTo(r*.58,-r*.26);ctx.stroke();ctx.fillStyle='#2b201d';ctx.beginPath();ctx.ellipse(-r*.32,-r*.1,r*.07,r*.12,0,0,Math.PI*2);ctx.ellipse(r*.32,-r*.1,r*.07,r*.12,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e89aab';ctx.beginPath();ctx.moveTo(-r*.12,r*.12);ctx.lineTo(r*.12,r*.12);ctx.lineTo(0,r*.23);ctx.fill();ctx.strokeStyle='#6d4b40';ctx.lineWidth=1.5;ctx.beginPath();if(cry){ctx.arc(0,r*.34,r*.24,Math.PI,0);ctx.fillStyle='#6dc8ff';ctx.beginPath();ctx.ellipse(-r*.5,r*.22,r*.08,r*.16,-.3,0,Math.PI*2);ctx.ellipse(r*.5,r*.22,r*.08,r*.16,.3,0,Math.PI*2);ctx.fill();ctx.stroke();}else{ctx.arc(0,r*.20,r*.18,0,Math.PI);ctx.stroke();}ctx.restore();}
+function drawPig(x,y,r){ctx.save();ctx.translate(x,y);ctx.fillStyle='#7bcf54';ctx.strokeStyle='#386d2a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-r*.6,-r*.55);ctx.lineTo(-r*.8,-r*1.25);ctx.lineTo(-r*.1,-r*.8);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.ellipse(0,r*.2,r*.55,r*.33,0,0,Math.PI*2);ctx.fillStyle='#b2e97c';ctx.fill();ctx.stroke();ctx.fillStyle='#35612a';ctx.beginPath();ctx.arc(-r*.3,-r*.1,r*.08,0,Math.PI*2);ctx.arc(r*.3,-r*.1,r*.08,0,Math.PI*2);ctx.fill();ctx.restore();}
+function drawBlock(b){ctx.fillStyle='#bd8250';ctx.strokeStyle='#6f4227';ctx.lineWidth=3;ctx.fillRect(b.x,b.y,b.w,b.h);ctx.strokeRect(b.x,b.y,b.w,b.h);ctx.strokeStyle='#e7b57b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x+4,b.y+4);ctx.lineTo(b.x+b.w-4,b.y+4);ctx.stroke();}
+function drawSlingshot(){const x=W*.17,y=groundY()-28;ctx.strokeStyle='#704123';ctx.lineWidth=10;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-10,y+25);ctx.lineTo(x-7,y-33);ctx.moveTo(x+10,y+25);ctx.lineTo(x+7,y-33);ctx.stroke();ctx.strokeStyle='#5b2e24';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-7,y-30);ctx.lineTo(cat?cat.x:x,cat?cat.y:y-12);ctx.lineTo(x+7,y-30);ctx.stroke();}
+function draw(){if(!ctx||!W||!H)return;ctx.clearRect(0,0,W,H);let gy=groundY();ctx.fillStyle='#77d6f4';ctx.fillRect(0,0,W,gy);ctx.fillStyle='#fff';[[W*.14,H*.18],[W*.78,H*.14],[W*.48,H*.09]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,18,0,Math.PI*2);ctx.arc(x+22,y-8,23,0,Math.PI*2);ctx.arc(x+45,y,17,0,Math.PI*2);ctx.fill()});ctx.fillStyle='#76bf54';ctx.beginPath();ctx.moveTo(0,gy-10);ctx.quadraticCurveTo(W*.3,gy-28,W*.5,gy-7);ctx.quadraticCurveTo(W*.8,gy-18,W,gy-5);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();ctx.fillStyle='#428b3d';ctx.fillRect(0,gy+12,W,H-gy);ctx.fillStyle='#8b5b35';ctx.fillRect(W*.13,gy-10,W*.08,10);drawSlingshot();blocks.forEach(drawBlock);if(pig&&pig.alive)drawPig(pig.x,pig.y,pig.r);if(cat&&cat.active)drawCat(cat.x,cat.y,cat.r,cat.cry);particles.forEach(p=>{ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()});if(dragging&&dragPos){ctx.strokeStyle='#6d3926';ctx.lineWidth=3;ctx.setLineDash([5,6]);ctx.beginPath();ctx.moveTo(cat.x,cat.y);ctx.lineTo(cat.x+(cat.x-dragPos.x)*2,cat.y+(cat.y-dragPos.y)*2);ctx.stroke();ctx.setLineDash([]);}}
+function showModal(title,body,buttons){$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modalActions').innerHTML='';buttons.forEach(b=>{let el=document.createElement('button');el.textContent=b.text;el.onclick=b.action;$('modalActions').appendChild(el)});$('modal').style.display='flex';}
+function hideModal(){$('modal').style.display='none';}
+function toast(t){$('toast').textContent=t;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2200);}
+function updateAmmo(){ $('ammo').textContent='🐱 × '+ammo; $('lives').textContent=ammo>2?'♥ ♥ ♥':ammo===2?'♥ ♥':ammo===1?'♥':'♡';}
+function particlesAt(x,y){if(particles.length>80)particles.splice(0,particles.length-40);for(let i=0;i<10;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.7)*5,r:2+Math.random()*4,color:['#ff9ecb','#fff0d7','#bd8250','#8acb57'][i%4]});}
+function fire(dx,dy){if(!cat||!cat.active||ammo<=0||phase!=='playing')return;cat.vx=dx*.16;cat.vy=dy*.16;cat.air=true;cat.active=true;cat.cry=false;ammo--;shots++;if(level===2)level2Attempts++;updateAmmo();phase='flight';}
+function levelOneReward(){phase='reward';showModal('LEVEL 1 COMPLETE! 🌸','<div class="rewardcat">🐱🎀💐</div><p class="letter">Hi lil Angry Bird !<br><br>Congratulations for moving to the next level. take the lilies loml please &amp; enjoy the game!</p><p>🎁 You unlocked the lily gift box!</p>',[{text:'Open gift & continue ▶',action:()=>{hideModal();setupLevel(2);}}]);}
+function levelTwoEnding(){if(gameOver)return;gameOver=true;phase='ending';showModal('LEVEL 2 — THE END 💌','<div class="rewardcat">😿❤️</div><p class="letter">Dear lil angry bird,<br><br>I am sorry for making this level so difficult. I hope you still enjoyed our little game. Thank you for playing, loml. 💗<br><br>— Your silly cat</p><p>You did your best. The target was never going to be hit. 🐆</p>',[{text:'Read again',action:()=>levelTwoEndingResetView()},{text:'Finish game ♡',action:()=>{hideModal();$('board').style.display='block';$('board').innerHTML='<h1>Thank you!</h1><p>You reached the end of Mahi Bird. 💗🐾</p>';phase='finished';}}]);}
+function levelTwoEndingResetView(){showModal('LEVEL 2 — THE END 💌','<div class="rewardcat">😿❤️</div><p class="letter">Dear lil angry bird,<br><br>I am sorry for making this level so difficult. I hope you still enjoyed our little game. Thank you for playing, loml. 💗<br><br>— Your silly cat</p>',[{text:'Finish game ♡',action:()=>{hideModal();phase='finished';}}]);}
+function pointerDown(e){if(phase!=='playing'||!cat||!cat.active||cat.air)return;let r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(Math.hypot(x-cat.x,y-cat.y)<65||x<W*.25&&y>groundY()-130){dragging=true;dragStart={x:cat.x,y:cat.y};dragPos={x,y};canvas.setPointerCapture?.(e.pointerId);}}
+function pointerMove(e){if(dragging){let r=canvas.getBoundingClientRect();dragPos={x:e.clientX-r.left,y:e.clientY-r.top};draw();}}
+function pointerUp(){if(!dragging)return;dragging=false;let dx=cat.x-dragPos.x,dy=cat.y-dragPos.y;dx=Math.max(-150,Math.min(150,dx));dy=Math.max(-150,Math.min(150,dy));if(Math.hypot(dx,dy)<12){draw();return;}fire(dx,dy);draw();}
+canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
+$('startBtn').onclick=async()=>{started=true;$('startScreen').style.display='none';try{await music.play()}catch(e){toast('Tap ♫ to start music');}setupLevel(1);};
+$('pause').onclick=()=>{if(phase==='playing'||phase==='flight'){paused=true;showModal('PAUSED','Take a little break. 🐱',[{text:'Resume',action:()=>{hideModal();paused=false;}} ,{text:'Restart level',action:()=>{hideModal();setupLevel(level)}}]);}};
+$('mute').onclick=()=>{music.muted=!music.muted;$('mute').textContent=music.muted?'♫̸':'♫';if(!music.muted&&started)music.play().catch(()=>{});};
+// One lightweight animation loop. Physics uses a capped time step so the game
+// remains stable on slower phones/tablets, and rendering is limited to ~30 FPS.
+let animating=false,lastFrame=0,accumulator=0;
+const FRAME_MS=1000/30;
+function mainLoop(now){
+  if(!animating)return;
+  requestAnimationFrame(mainLoop);
+  if(paused)return;
+  if(now-lastFrame<FRAME_MS)return;
+  const dt=Math.min((now-lastFrame)/16.667,2);
+  lastFrame=now;
+  if(phase==='flight'&&cat&&cat.active){
+    cat.vy+=.32*dt;cat.x+=cat.vx*dt;cat.y+=cat.vy*dt;cat.vx*=Math.pow(.995,dt);
+    if(pig&&pig.alive&&Math.hypot(cat.x-pig.x,cat.y-pig.y)<cat.r+pig.r){
+      if(level===1){pig.alive=false;particlesAt(pig.x,pig.y);phase='won';setTimeout(levelOneReward,700);}
+      else cat.cry=true;
+    }
+    if(cat.y>groundY()-cat.r||cat.x>W+60||cat.x< -60){
+      cat.y=Math.min(cat.y,groundY()-cat.r);cat.active=false;cat.cry=true;particlesAt(cat.x,cat.y);
+      if(level===1){
+        if(ammo<=0){setTimeout(()=>showModal('TRY AGAIN?','The pig is still standing! 🐷',[{text:'Retry Level 1',action:()=>{hideModal();setupLevel(1)}}]),700);}
+        else{phase='playing';cat={x:W*.17,y:groundY()-42,r:25,vx:0,vy:0,air:false,cry:true,active:true};toast('Aww, the kitty missed! 😿');}
+      }else if(levelTwoAttempts>=6||ammo<=0){setTimeout(levelTwoEnding,700);}
+      else{phase='playing';cat={x:W*.17,y:groundY()-42,r:25,vx:0,vy:0,air:false,cry:true,active:true};toast('This target is suspiciously impossible... 😿');}
+    }
+  }
+  for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=.12*dt;p.r*=Math.pow(.97,dt);if(p.r<=.5)particles.splice(i,1);}
+  draw();
+}
+function restartLoop(){if(!animating){animating=true;requestAnimationFrame(mainLoop);}}
+resize();restartLoop();
+})();
+</script>
+</body>
+</html>
